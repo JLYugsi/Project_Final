@@ -1,0 +1,23 @@
+# Composer
+/vendor/
+
+# Opcional: ignorar el lock si no quieres versionarlo (no recomendado)
+# composer.lock
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
