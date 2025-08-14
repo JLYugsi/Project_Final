@@ -117,7 +117,7 @@ class BookRepository implements RepositoryInterface{
             $row['email'] ?? '',
             'temporal',
             $row['orcid'] ?? '',
-            $row['affiliation'] ?? ''
+            $row['afiliation'] ?? ''
         );
 
         // Reemplazar hash sin regenerar solo si existe password

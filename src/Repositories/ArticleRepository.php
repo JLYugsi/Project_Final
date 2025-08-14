@@ -101,9 +101,9 @@ class ArticleRepository implements RepositoryInterface
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             $stmt->closeCursor();
 
-            if ($result && isset($result['new_article_id'])) {
+            if ($result && isset($result['new_pub_id'])) {
                 // Actualiza el ID de la entidad Article con el ID generado por la base de datos
-                $entity->setId((int)$result['new_article_id']);
+                $entity->setId((int)$result['new_pub_id']);
                 return true;
             }
             return false;
@@ -117,7 +117,7 @@ class ArticleRepository implements RepositoryInterface
     public function update(object $entity): bool
     {
         if (!$entity instanceof Article) {
-            throw new \InvalidArgumentException('Se esperaba una entidad de tipo Article.');
+            throw new \InvalidArgumentException('Article expected');
         }
         if (is_null($entity->getId())) {
             throw new \InvalidArgumentException('El ID del artículo debe estar establecido para actualizar.');
@@ -189,48 +189,40 @@ class ArticleRepository implements RepositoryInterface
     }
 
     public function hydrate(array $row): Article
-    {
-        $authorData = [
-            'id' => (int)$row['author_id_author'],
-            'first_name' => $row['first_name'],
-            'last_name' => $row['last_name'],
-            'username' => $row['username'],
-            'email' => $row['email'],
-            'password' => $row['password'],
-            'orcid' => $row['orcid'],
-            'afiliation' => $row['afiliation']
-        ];
-        
-        $Author = new Author(
-            $authorData['id'],
-            $authorData['first_name'],
-            $authorData['last_name'],
-            $authorData['username'],
-            $authorData['email'],
-            'placeholder_password_temporal',
-            $authorData['orcid'],
-            $authorData['afiliation']
-        );
+{
+    // Verificación de si los índices existen en el array con valores predeterminados
+    $author = new Author(
+        (int) ($row['id'] ?? 0),
+        $row['first_name'] ?? '',
+        $row['last_name'] ?? '',
+        $row['username'] ?? '',
+        $row['email'] ?? '',
+        'temporal', // El password no se trae desde la BD para seguridad, pero se podría
+        $row['orcid'] ?? '',
+        $row['afiliation'] ?? ''
+    );
 
-        // Usar Reflection para establecer la contraseña hash real de la base de datos
-        $ref = new ReflectionClass($Author);
-        $prop = $ref->getProperty('password');
-        $prop->setAccessible(true);
-        $prop->setValue($Author, $authorData['password']);
-
-
-        // 2. Crear y devolver el objeto Article
-        return new Article (
-            (int)$row['publication_id'],
-            $row['titulo'],
-            $row['description'],
-            new \DateTime($row['publication_date']),
-            $Author,
-            $row['DOI'],
-            $row['abstract'],
-            $row['keywords'],
-            $row['indexation'],
-            $row['magazine'],
-            $row['area']);
+    // Reemplazar hash sin regenerar solo si existe password
+    if (isset($row['password'])) {
+        $ref = new ReflectionClass($author);
+        $property = $ref->getProperty('password');
+        $property->setAccessible(true);
+        $property->setValue($author, $row['password']);
     }
+
+    // Creación de la entidad Article
+    return new Article(
+        (int) ($row['publication_id'] ?? 0),
+        $row['titulo'] ?? '',
+        $row['description'] ?? '',
+        new \DateTime($row['publication_date'] ?? 'now'),
+        $author,
+        $row['DOI'] ?? '',
+        $row['abstract'] ?? '',
+        $row['keywords'] ?? '',
+        $row['indexation'] ?? '',
+        $row['magazine'] ?? '',
+        $row['area'] ?? ''
+    );
+}
 }    
